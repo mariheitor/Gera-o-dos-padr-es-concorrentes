@@ -1,0 +1,81 @@
+import numpy as np
+import pandas as pd
+
+# Parâmetros
+mu = 0
+sigma = 1
+t = np.arange(1, 41)
+num_samples = 200
+
+# Funções geradoras
+def generate_normal():
+    return mu + np.random.normal(0, sigma, size=t.shape)
+
+def generate_cyclic(alpha=2.0, period=20):
+    return mu + np.random.normal(0, sigma, size=t.shape) + alpha * np.sin(2 * np.pi * t / period)
+
+def generate_trend(g=0.2):
+    return mu + np.random.normal(0, sigma, size=t.shape) + g * t
+
+def generate_decreasing_trend(g=0.2):
+    return mu + np.random.normal(0, sigma, size=t.shape) - g * t
+
+def generate_shift(k=1, s=2.0, P=20):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=t.shape) + shift
+
+def generate_negative_shift(k=1, s=2.0, P=20):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=t.shape) - shift
+
+def generate_CT(alpha=2.0, period=20, g=0.2):
+    return mu + np.random.normal(0, sigma, size=t.shape) + alpha * np.sin(2 * np.pi * t / period) + g * t
+
+def generate_CS(alpha=2.0, period=20, k=1, s=2.0, P=5):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=t.shape) + alpha * np.sin(2 * np.pi * t / period) - shift
+
+def generate_TS(g=0.2, k=1, s=2.0, P=5):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=t.shape) + g * t - shift
+
+def generate_CTS(alpha=2.0, period=20, g=0.2, k=1, s=2.0, P=5):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=t.shape) + alpha * np.sin(2 * np.pi * t / period) + g * t - shift
+
+# Dicionário
+pattern_funcs = {
+    "Normal": generate_normal,
+    "Cyclic": generate_cyclic,
+    "Increasing Trend": generate_trend,
+    "Decreasing Trend": generate_decreasing_trend,
+    "Upward Shift": generate_shift,
+    "Downward Shift": generate_negative_shift,
+    "Cyclic + Trend (CT)": generate_CT,
+    "Cyclic + Shift (CS)": generate_CS,
+    "Trend + Shift (TS)": generate_TS,
+    "Cyclic + Trend + Shift (CTS)": generate_CTS
+}
+
+# Gerar os dados
+data = []
+for label, func in pattern_funcs.items():
+    for sample_id in range(num_samples):
+        x_vals = func()
+        for i in range(len(t)):
+            data.append({
+                "Sample_ID": f"{label}_{sample_id}",
+                "Pattern": label,
+                "t": t[i],
+                "X(t)": x_vals[i]
+            })
+
+# Criar DataFrame e salvar localmente no Colab
+df = pd.DataFrame(data)
+csv_path = "control_chart_10patterns2.csv"
+df.to_csv(csv_path, index=False)
+print("Arquivo gerado com sucesso!")
+
+# Código para baixar direto no seu computador
+from google.colab import files
+files.download(csv_path)
